@@ -52,7 +52,7 @@
         group: vagrant
         state: directory   
     - command: setsebool httpd_can_network_connect on -P
-    - command: supervisorctl reread
+    - service: name=supervisord state=restarted
     - supervisorctl: name=program:webdev state=restarted config=/etc/supervisor/supervisord.conf
     - service: name=nginx state=restarted
     
