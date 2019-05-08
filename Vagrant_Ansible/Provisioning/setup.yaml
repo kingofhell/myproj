@@ -1,0 +1,60 @@
+---
+- hosts: all
+  sudo: yes
+  tasks:
+    - timezone: 
+        name: UTC
+    - yum:
+        name: "{{packages}}"
+        state: latest
+      vars:
+        packages:
+        - git
+        - nginx
+        - supervisor
+    - yum:
+        name: "@Development tools"
+        state: present
+    - file:
+        path: /root/.ssh/
+        owner: root
+        group: root
+        mode: 0700
+        state: directory    
+    - copy:
+        src: /vagrant/Provisioning/files/id_rsa
+        dest: /root/.ssh/id_rsa
+        owner: root
+        group: root
+        mode: 0600
+    - git:
+        repo: 'https://spmkumar@bitbucket.org/azneita/devops-challenge.git'
+        dest: /webapps/devops/devops-challenge/
+    - easy_install:
+        name: pip
+        state: latest    
+    - pip:
+        requirements: /webapps/devops/devops-challenge/requirements.txt   
+    - pip:
+        name: virtualenv, gunicorn
+    - copy:
+        src: /vagrant/Provisioning/files/webdev.conf
+        dest: /etc/nginx/conf.d/webdev.conf
+    - copy:
+        src: /vagrant/Provisioning/files/gunicorn.ini
+        dest: /etc/supervisord.d/gunicorn.ini    
+    - copy:
+        src: /vagrant/Provisioning/files/webdevlogrotate
+        dest: /etc/logrotate.d/webdevlogrotate
+    - file:
+        path: /var/log/webdev/
+        owner: vagrant
+        group: vagrant
+        state: directory   
+    - command: setsebool httpd_can_network_connect on -P
+    - command: supervisorctl reread
+    - supervisorctl: name=program:webdev state=restarted config=/etc/supervisor/supervisord.conf
+    - service: name=nginx state=restarted
+    
+   
+    
